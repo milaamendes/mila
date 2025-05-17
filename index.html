@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+file_path = '/mnt/data/index.html'
+content = """<!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Análise de Clientes</title>
   <style>
-    /* Container centralizado */
     .container {
       max-width: 960px;
       margin: 40px auto;
@@ -14,8 +14,6 @@
       font-family: Arial, sans-serif;
       color: #333;
     }
-
-    /* Título maior */
     h1 {
       font-size: 2.5rem;
       margin-bottom: 30px;
@@ -24,8 +22,6 @@
       justify-content: center;
       gap: 10px;
     }
-
-    /* Linha de botões */
     .botoes {
       display: flex;
       flex-wrap: wrap;
@@ -33,7 +29,6 @@
       gap: 10px;
       margin-bottom: 30px;
     }
-
     .botoes button {
       flex: 1;
       min-width: 140px;
@@ -53,13 +48,11 @@
     .botoes button:hover {
       background-color: #1c86ee;
     }
-
-    /* Container do gráfico */
     .imagem-container {
       display: flex;
       justify-content: center;
       margin-bottom: 40px;
-      min-height: 300px;    /* reserva espaço antes de carregar */
+      min-height: 300px;
     }
     .imagem-container .status {
       font-size: 1.1rem;
@@ -72,8 +65,6 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-
-    /* Container da tabela */
     .tabela-container {
       margin-bottom: 40px;
     }
@@ -97,8 +88,6 @@
     td.num {
       text-align: right;
     }
-
-    /* Mensagem de erro */
     .erro {
       color: #a00;
       font-size: 1rem;
@@ -119,11 +108,11 @@
     <h1>📊 Análise de Clientes</h1>
 
     <div class="botoes">
-      <button onclick="carregarImagem('clusterizacao')">🔍 Clusterização</button>
-      <button onclick="carregarImagem('clv')">💰 CLV</button>
-      <button onclick="carregarImagem('conjoint')">📈 Conjoint</button>
-      <button onclick="carregarImagem('previsao')">🔮 Previsão</button>
-      <button onclick="carregarCSV()">📂 Carregar Dados</button>
+      <button onclick="carregarImagem('clusterizacao')">Clusterização</button>
+      <button onclick="carregarImagem('clv')"> CLV</button>
+      <button onclick="carregarImagem('conjoint')">Conjoint</button>
+      <button onclick="carregarImagem('previsao')"> Previsão</button>
+      <button onclick="carregarCSV()">Carregar Dados</button>
     </div>
 
     <div class="imagem-container" id="imagemContainer">
@@ -166,14 +155,24 @@
 
         const buf = await res.arrayBuffer();
         const text = new TextDecoder('utf-8').decode(buf).replace(/^\uFEFF/, '');
-        const linhas = text.trim().split(/\r?\n/);
+        const linhas = text.trim().split(/\\r?\\n/);
+        if (linhas.length < 2) throw new Error('CSV vazio ou inválido');
+
         const headers = linhas[0].split(',').map(h => h.trim());
-        const expected = ['cliente_id','idade','renda_anual','frequencia_compras','valor_medio_compra','preferencia_frete_gratis','satisfacao_qualidade','total_gasto'];
-        if (JSON.stringify(headers) !== JSON.stringify(expected)) {
+        const expectedHeaders = [
+          'cliente_id',
+          'idade',
+          'renda_mensal',
+          'cidade',
+          'tipo_cliente',
+          'ultima_compra',
+          'frequencia_compras',
+          'total_gasto'
+        ];
+        if (JSON.stringify(headers) !== JSON.stringify(expectedHeaders)) {
           throw new Error('Cabeçalhos inesperados no CSV');
         }
 
-        // monta tabela
         const table = document.createElement('table');
         const thead = table.createTHead();
         const hr = thead.insertRow();
@@ -182,14 +181,15 @@
           th.textContent = h;
           hr.appendChild(th);
         });
+
         const tbody = table.createTBody();
         linhas.slice(1).forEach(ln => {
           const vals = ln.split(',').map(v => v.trim());
           if (vals.length !== headers.length) return;
           const row = tbody.insertRow();
-          vals.forEach((v, i) => {
+          vals.forEach(v => {
             const td = row.insertCell();
-            td.classList.add(!isNaN(v) ? 'num' : '');
+            if (!isNaN(v) && v !== '') td.classList.add('num');
             td.textContent = v;
           });
         });
@@ -197,12 +197,17 @@
         c.innerHTML = '';
         c.appendChild(table);
       } catch (err) {
-        c.innerHTML = `
+        c.innerHTML = \`
           <div class="erro">
-            <strong>Erro ao carregar dados:</strong> ${err.message}
-          </div>`;
+            <strong>Erro ao carregar dados:</strong> \${err.message}
+          </div>\`;
       }
     }
   </script>
 </body>
 </html>
+"""
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+file_path
