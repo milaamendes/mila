@@ -1,20 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <title>Dashboard de Marketing</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/">
+  <title>Análise de Clientes</title>
+  <style>
+    /* ... seu CSS permanece idêntico ... */
+  </style>
 </head>
 <body>
-  <h1>CLV por Cliente</h1>
-  <canvas id="clvChart"></canvas>
+  <div class="container">
+    <h1>📊 Análise de Clientes</h1>
+    
+    <div class="botoes">
+      <button onclick="carregarImagem('clusterizacao')">🔍 Clusterização</button>
+      <button onclick="carregarImagem('clv')">💰 CLV</button>
+      <button onclick="carregarImagem('conjoint')">📈 Conjoint</button>
+      <button onclick="carregarImagem('previsao')">🔮 Previsão</button>
+      <button onclick="carregarCSV()">📂 Carregar Dados</button>
+    </div>
 
-  <h1>Clusterização de Clientes</h1>
-  <canvas id="clusterChart"></canvas>
+    <div class="imagem-container" id="imagemContainer">
+      <div class="status">Selecione uma visualização acima</div>
+    </div>
 
-  <h1>Eficiência das Campanhas</h1>
-  <canvas id="atributoChart"></canvas>
-  <canvas id="campanhaChart"></canvas>
+    <div class="tabela-container" id="tabelaContainer">
+      <div class="status">Clique em "Carregar Dados" para ver as informações</div>
+    </div>
+  </div>
 
-  <script src="script.js"></script>
+  <script>
+    // Configuração de caminhos absolutos
+    const BASE_URL = window.location.origin;
+
+    async function carregarCSV() {
+      const container = document.getElementById('tabelaContainer');
+      try {
+        container.innerHTML = '<div class="status">Carregando dados.</div>';
+
+        // URL absoluta com cache busting (alterado para clientes.csv)
+        const csvUrl = `${BASE_URL}/clientes.csv?t=${Date.now()}`;
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+
+        // Decodificação segura
+        const buffer = await response.arrayBuffer();
+        const decoder = new TextDecoder('utf-8');
+        const csvData = decoder.decode(buffer).replace(/^\uFEFF/, '');
+
+        // Processamento do CSV
+        const linhas = csvData.split(/\r?\n/).filter(line => line.trim());
+        if (linhas.length < 2) throw new Error('CSV inválido');
+
+        const headers = linhas[0].split(',').map(h => h.trim());
+        const expectedHeaders = [
+          'cliente_id', 'idade', 'renda_anual', 'frequencia_compras',
+          'valor_medio_compra', 'preferencia_frete_gratis',
+          'satisfacao_qualidade', 'total_gasto'
+        ];
+        if (!arraysIguais(headers, expectedHeaders)) {
+          throw new Error('Cabeçalhos do CSV não correspondem');
+        }
+
+        // Construção da tabela
+        const table = document.createElement('table');
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        headers.forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+
+        const tbody = table.createTBody();
+        for (let i = 1; i < linhas.length; i++) {
+          const cells = linhas[i].split(',').map(c => c.trim());
+          if (cells.length !== headers.length) continue;
+          const row = tbody.insertRow();
+          cells.forEach((cell, idx) => {
+            const td = row.insertCell();
+            td.innerHTML = formatarCelula(cell, headers[idx]);
+          });
+        }
+
+        container.innerHTML = '';
+        container.appendChild(table);
+
+      } catch (error) {
+        console.error('Erro:', error);
+        container.innerHTML = `
+          <div class="erro">
+            <strong>Erro ao carregar dados:</strong> ${error.message}
+            <br><br>
+            <button onclick="location.reload()">↻ Tentar novamente</button>
+          </div>
+        `;
+      }
+    }
+
+    // ... o restante das funções formatarCelula, arraysIguais, carregarImagem e handleImageError permanece inalterado ...
+  </script>
 </body>
 </html>
